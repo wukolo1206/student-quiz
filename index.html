@@ -189,7 +189,16 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
     <button class="grade-chip" data-g="5" onclick="setMapGrade(5)">5 年級</button>
     <button class="grade-chip" data-g="6" onclick="setMapGrade(6)">6 年級</button>
   </div>
-  <div id="map-body"><div class="loading">載入中…</div></div>
+  <div id="map-hint" style="font-size:11px;color:#999;text-align:center;margin:6px 0 8px">選擇特定年級可查看概念關係地圖</div>
+  <div id="map-info" class="card" style="display:none;padding:12px 16px;margin-bottom:10px"></div>
+  <div id="map-network" style="height:360px;border:1px solid #dde8f0;border-radius:10px;background:white;margin-bottom:8px;display:none"></div>
+  <div id="map-legend" style="display:none;font-size:11px;color:#888;gap:12px;flex-wrap:wrap;margin-bottom:10px;justify-content:center">
+    <span style="color:#27ae60">● 掌握 ≥80%</span>
+    <span style="color:#f39c12">● 部分掌握</span>
+    <span style="color:#e74c3c">● 需補強</span>
+    <span style="color:#aaa">● 未練習</span>
+  </div>
+  <div id="map-body"></div>
 </div>
 
 </div>
@@ -506,38 +515,109 @@ function saveToMap(byInd){
   });
   localStorage.setItem(key,JSON.stringify(map));
 }
-function renderMap(){
-  var key='sqmap_'+(S.cfg.sid||'')+'_'+S.cfg.name;
-  var stored=localStorage.getItem(key);
-  if(!stored){document.getElementById('map-body').innerHTML='<div style="padding:20px;color:#aaa;text-align:center">尚無學習紀錄</div>';return;}
-  var map=JSON.parse(stored);
-  var recs=map.records;
-  var ids=Object.keys(recs).sort();
-  var gf=S.mapGradeFilter;
-  var filtered=gf?ids.filter(function(id){return recs[id].grade===gf;}):ids;
-  if(filtered.length===0){document.getElementById('map-body').innerHTML='<div style="padding:20px;color:#aaa;text-align:center">此年級尚無紀錄</div>';return;}
+var _visNet=null;
+function _mapPracticeUrl(id){
   var base=location.origin+location.pathname;
   var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
   var nameQ='&name='+encodeURIComponent(S.cfg.name)+'&sid='+encodeURIComponent(S.cfg.sid||'');
   var sheetQ=S.cfg.sheet?'&sheet='+encodeURIComponent(S.cfg.sheet):'';
+  return base+'?indicators='+id+'&count=all&order=random'+to+nameQ+sheetQ;
+}
+function renderMap(){
+  var key='sqmap_'+(S.cfg.sid||'')+'_'+S.cfg.name;
+  var stored=localStorage.getItem(key);
+  var map=stored?JSON.parse(stored):{records:{}};
+  var gf=S.mapGradeFilter;
+  document.getElementById('map-network').style.display='none';
+  document.getElementById('map-legend').style.display='none';
+  document.getElementById('map-info').style.display='none';
+  document.getElementById('map-hint').style.display=gf?'none':'block';
+  if(gf){
+    renderMapNetwork(map,gf);
+  } else {
+    renderMapCards(map);
+  }
+}
+function renderMapCards(map){
+  var recs=map.records;
+  var ids=Object.keys(recs).sort();
+  if(ids.length===0){document.getElementById('map-body').innerHTML='<div style="padding:20px;color:#aaa;text-align:center">尚無學習紀錄</div>';return;}
   var html='<div class="map-grid">';
-  filtered.forEach(function(id){
+  ids.forEach(function(id){
     var rec=recs[id];
     var pct=rec.latest;
     var cls=pct>=80?'ok':pct>=50?'mid':'bad';
     var last=rec.sessions[rec.sessions.length-1];
-    var times=rec.sessions.length;
-    var purl=base+'?indicators='+id+'&count=all&order=random'+to+nameQ+sheetQ;
     html+='<div class="map-card '+cls+'">'
       +'<div class="map-id">'+id+'</div>'
       +'<div class="map-name">'+rec.name+'</div>'
       +'<div class="map-score '+cls+'">'+pct+'%</div>'
-      +'<div class="map-meta">最高 '+rec.best+'%　共練 '+times+' 次<br>'+last.date+'</div>'
-      +'<a href="'+purl+'" target="_blank" class="map-again">再練一次 →</a>'
+      +'<div class="map-meta">最高 '+rec.best+'%　共練 '+rec.sessions.length+' 次<br>'+last.date+'</div>'
+      +'<a href="'+_mapPracticeUrl(id)+'" target="_blank" class="map-again">再練一次 →</a>'
       +'</div>';
   });
   html+='</div>';
   document.getElementById('map-body').innerHTML=html;
+}
+function renderMapNetwork(map,grade){
+  var recs=map.records||{};
+  var allIds=Object.keys(S.data.indicators).filter(function(id){return S.data.indicators[id].grade===grade;});
+  var idSet={};allIds.forEach(function(id){idSet[id]=1;});
+  var nodes=allIds.map(function(id){
+    var ind=S.data.indicators[id];
+    var rec=recs[id];
+    var bg,border,fontColor='#333';
+    if(!rec){bg='#f0f0f0';border='#bbb';}
+    else if(rec.latest>=80){bg='#d5f5e3';border='#27ae60';}
+    else if(rec.latest>=50){bg='#fef9e7';border='#f39c12';}
+    else{bg='#fdebd0';border='#e74c3c';}
+    return{id:id,label:id,title:ind.name+(rec?'\n'+rec.latest+'%':'\n未練習'),
+      color:{background:bg,border:border,highlight:{background:bg,border:'#1a4f7a'}},
+      font:{size:10,color:fontColor},shape:'box',margin:4,borderWidth:rec?2:1};
+  });
+  var edges=[];
+  allIds.forEach(function(id){
+    var ind=S.data.indicators[id];
+    if(ind.parents)ind.parents.forEach(function(pid){
+      if(idSet[pid])edges.push({from:pid,to:id,arrows:'to',color:{color:'#ccc'},width:1});
+    });
+  });
+  var container=document.getElementById('map-network');
+  container.style.display='block';
+  document.getElementById('map-legend').style.display='flex';
+  document.getElementById('map-body').innerHTML='';
+  if(_visNet){_visNet.destroy();_visNet=null;}
+  _visNet=new vis.Network(container,
+    {nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},
+    {layout:{hierarchical:{enabled:true,direction:'UD',sortMethod:'directed',levelSeparation:70,nodeSpacing:100}},
+     physics:false,
+     interaction:{hover:true,tooltipDelay:100},
+     edges:{smooth:{type:'cubicBezier',forceDirection:'vertical'}}}
+  );
+  _visNet.on('click',function(p){
+    if(p.nodes.length>0)showMapNodeInfo(p.nodes[0],map);
+  });
+}
+function showMapNodeInfo(id,map){
+  var ind=S.data.indicators[id];
+  var rec=(map.records||{})[id];
+  var panel=document.getElementById('map-info');
+  var cls=rec?(rec.latest>=80?'ok':rec.latest>=50?'mid':'bad'):'';
+  var html='<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:150px">'
+    +'<div class="map-id">'+id+'</div>'
+    +'<div class="map-name">'+ind.name+'</div>';
+  if(rec){
+    html+='<div class="map-score '+cls+'">'+rec.latest+'%</div>'
+      +'<div class="map-meta">最高 '+rec.best+'%　共練 '+rec.sessions.length+' 次</div>';
+  } else {
+    html+='<div style="color:#aaa;font-size:12px;margin-top:4px">尚未練習</div>';
+  }
+  html+='</div>'
+    +'<a href="'+_mapPracticeUrl(id)+'" target="_blank" class="btn-practice" style="align-self:center">去練習 →</a>'
+    +'</div>';
+  panel.innerHTML=html;
+  panel.style.display='block';
 }
 function showMap(){
   S.mapGradeFilter=0;
@@ -546,7 +626,15 @@ function showMap(){
   });
   document.getElementById('map-title').textContent='學習地圖 — '+S.cfg.name;
   showView('map');
-  renderMap();
+  if(!window.vis){
+    document.getElementById('map-body').innerHTML='<div class="loading">地圖載入中…</div>';
+    var s=document.createElement('script');
+    s.src='https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js';
+    s.onload=function(){renderMap();};
+    document.head.appendChild(s);
+  } else {
+    renderMap();
+  }
 }
 </script>
 </body>

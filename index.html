@@ -563,37 +563,61 @@ function renderMapNetwork(map,grade){
   var recs=map.records||{};
   var allIds=Object.keys(S.data.indicators).filter(function(id){return S.data.indicators[id].grade===grade;});
   var idSet={};allIds.forEach(function(id){idSet[id]=1;});
-  var nodes=allIds.map(function(id){
+
+  // 只顯示：練過的節點 + 它們的直接先備(parents) + 直接後繼(children)
+  var visible={};
+  allIds.forEach(function(id){
+    if(recs[id]){
+      visible[id]=1;
+      // 加入直接先備
+      var ind=S.data.indicators[id];
+      if(ind.parents)ind.parents.forEach(function(pid){if(idSet[pid])visible[pid]=1;});
+      // 加入直接後繼
+      allIds.forEach(function(cid){
+        var ci=S.data.indicators[cid];
+        if(ci.parents&&ci.parents.indexOf(id)>=0)visible[cid]=1;
+      });
+    }
+  });
+  // 若無紀錄則顯示全部（避免空圖）
+  if(Object.keys(visible).length===0)allIds.forEach(function(id){visible[id]=1;});
+
+  var visIds=Object.keys(visible);
+  var nodes=visIds.map(function(id){
     var ind=S.data.indicators[id];
     var rec=recs[id];
-    var bg,border,fontColor='#333';
+    var bg,border;
     if(!rec){bg='#f0f0f0';border='#bbb';}
     else if(rec.latest>=80){bg='#d5f5e3';border='#27ae60';}
     else if(rec.latest>=50){bg='#fef9e7';border='#f39c12';}
     else{bg='#fdebd0';border='#e74c3c';}
-    return{id:id,label:id,title:ind.name+(rec?'\n'+rec.latest+'%':'\n未練習'),
+    var label=id+(rec?'\n'+rec.latest+'%':'');
+    return{id:id,label:label,title:ind.name+(rec?'\n最近:'+rec.latest+'% 最高:'+rec.best+'%':'\n未練習'),
       color:{background:bg,border:border,highlight:{background:bg,border:'#1a4f7a'}},
-      font:{size:10,color:fontColor},shape:'box',margin:4,borderWidth:rec?2:1};
+      font:{size:11,multi:false},shape:'box',margin:6,borderWidth:rec?2:1};
   });
   var edges=[];
-  allIds.forEach(function(id){
+  visIds.forEach(function(id){
     var ind=S.data.indicators[id];
     if(ind.parents)ind.parents.forEach(function(pid){
-      if(idSet[pid])edges.push({from:pid,to:id,arrows:'to',color:{color:'#ccc'},width:1});
+      if(visible[pid])edges.push({from:pid,to:id,arrows:'to',color:{color:'#ccc'},width:1});
     });
   });
+
   var container=document.getElementById('map-network');
   container.style.display='block';
+  container.style.height='420px';
   document.getElementById('map-legend').style.display='flex';
   document.getElementById('map-body').innerHTML='';
   if(_visNet){_visNet.destroy();_visNet=null;}
   _visNet=new vis.Network(container,
     {nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},
-    {layout:{hierarchical:{enabled:true,direction:'UD',sortMethod:'directed',levelSeparation:70,nodeSpacing:100}},
+    {layout:{hierarchical:{enabled:true,direction:'UD',sortMethod:'directed',levelSeparation:90,nodeSpacing:140,treeSpacing:180}},
      physics:false,
-     interaction:{hover:true,tooltipDelay:100},
-     edges:{smooth:{type:'cubicBezier',forceDirection:'vertical'}}}
+     interaction:{hover:true,tooltipDelay:200,zoomView:true,dragView:true},
+     edges:{smooth:{type:'cubicBezier',forceDirection:'vertical'},color:{color:'#ccc'},arrows:{to:{scaleFactor:0.6}}}}
   );
+  _visNet.once('afterDrawing',function(){_visNet.fit({animation:{duration:400,easingFunction:'easeInOutQuad'}});});
   _visNet.on('click',function(p){
     if(p.nodes.length>0)showMapNodeInfo(p.nodes[0],map);
   });

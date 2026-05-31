@@ -139,6 +139,11 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
       <label class="form-label" for="i-email">老師 Email（選填，結果頁寄信用）</label>
       <input type="email" id="i-email" placeholder="teacher@school.edu.tw" oninput="updateShareUrl()">
     </div>
+    <div class="form-group">
+      <label class="form-label" for="i-sheet">紀錄試算表 ID（選填，自動寫入 Google Sheets）</label>
+      <input type="text" id="i-sheet" placeholder="貼上 Google Sheet ID（網址 /d/ 後面那段）" oninput="updateShareUrl()">
+      <div class="hint">📌 填入後學生作答結果會自動寫入你的試算表。<a href="https://docs.google.com/spreadsheets/d/1jvONgkr8hLqT5pYFJXkT2TPgX7SIm-yXXiAfBrJO3nM/copy" target="_blank" style="color:#1a4f7a">點此複製模板</a>，再將試算表分享給 wukolo1206@gmail.com（可編輯）。</div>
+    </div>
     <div class="share-row">
       <input type="text" id="share-url" readonly placeholder="選好指標後，點此複製分享連結給學生">
       <button class="btn btn-copy" onclick="copyShareUrl()">📋 複製連結</button>
@@ -190,7 +195,8 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 </div>
 
 <script>
-var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0,mapGradeFilter:0};
+var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:'',sheet:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0,mapGradeFilter:0};
+var GAS_URL='https:/'+ '/script.google.com/macros/s/AKfycby1XbfGkfnOy-mXHreGsRy9kmQ-gHX4ptsmNK0rR0ts-f-I9Hbb2bgvJGI6d8Qo9WdD/exec';
 window.onload=function(){
   fetch('./quiz_data.json?t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
@@ -209,6 +215,7 @@ window.onload=function(){
           S.cfg.count=p.get('count')==='all'?0:(parseInt(p.get('count'))||0);
           S.cfg.order=p.get('order')||'random';
           S.cfg.to=decodeURIComponent(p.get('to')||'');
+          S.cfg.sheet=p.get('sheet')||'';
           S.locked=true;
           document.getElementById('settings-block').style.display='none';
           document.getElementById('btn-start').disabled=false;
@@ -271,7 +278,8 @@ function updateShareUrl(){
   var cnt=(cntType&&cntType.value==='custom')?(document.getElementById('i-cnt').value||5):'all';
   var ord=document.querySelector('[name=ord]:checked');
   var to=document.getElementById('i-email').value.trim();
-  var url=base+'?indicators='+S.cfg.inds.join(',')+'&count='+cnt+'&order='+(ord?ord.value:'random')+(to?'&to='+encodeURIComponent(to):'');
+  var sheet=document.getElementById('i-sheet').value.trim();
+  var url=base+'?indicators='+S.cfg.inds.join(',')+'&count='+cnt+'&order='+(ord?ord.value:'random')+(to?'&to='+encodeURIComponent(to):'')+(sheet?'&sheet='+encodeURIComponent(sheet):'');
   document.getElementById('share-url').value=url;
 }
 function copyShareUrl(){
@@ -290,6 +298,7 @@ function startQuiz(){
     var ord=document.querySelector('[name=ord]:checked');
     S.cfg.order=ord?ord.value:'random';
     S.cfg.to=document.getElementById('i-email').value.trim();
+    S.cfg.sheet=document.getElementById('i-sheet').value.trim();
   }
   buildQs();
   if(S.qs.length===0){alert('所選指標目前無可診斷的題目（需有截圖且有答案）');return;}
@@ -422,6 +431,7 @@ function renderResult(){
   html+='</div>';
   document.getElementById('result-body').innerHTML=html;
   saveToMap(byInd);
+  postToSheet(byInd);
 }
 function buildMailto(byInd){
   var nm=(S.cfg.sid?S.cfg.sid+' ':'')+S.cfg.name;
@@ -457,6 +467,24 @@ function copyResult(){
 }
 function showView(v){
   ['config','quiz','result','map'].forEach(function(n){document.getElementById('v-'+n).style.display=n===v?'':'none';});
+}
+function postToSheet(byInd){
+  if(!S.cfg.sheet)return;
+  var today=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  var results=[];
+  S.cfg.inds.forEach(function(id){
+    var r=byInd[id];
+    if(!r||r.total===0)return;
+    var ind=S.data.indicators[id];
+    results.push({id:id,name:ind.name,correct:r.correct,total:r.total,pct:Math.round(r.correct/r.total*100),grade:ind.grade||''});
+  });
+  var payload=JSON.stringify({date:today,to:S.cfg.to,sid:S.cfg.sid,name:S.cfg.name,results:results});
+  fetch(GAS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'sheetId='+encodeURIComponent(S.cfg.sheet)+'&payload='+encodeURIComponent(payload)
+  }).catch(function(){});
 }
 function saveToMap(byInd){
   if(!S.cfg.name)return;

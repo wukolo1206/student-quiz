@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>學扶數學診斷測驗</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft JhengHei","微軟正黑體",sans-serif;background:#f5f8fc;color:#333;min-height:100vh}
+.container{max-width:680px;margin:0 auto;padding:16px}
+h1{color:#1a4f7a;font-size:20px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #d6eaf8}
+h2{font-size:16px;color:#1a4f7a;margin-bottom:12px}
+.form-group{margin-bottom:16px}
+label.form-label{display:block;font-size:13px;color:#555;margin-bottom:6px;font-weight:bold}
+input[type=text],input[type=email]{width:100%;padding:10px 12px;border:1px solid #cdd;border-radius:8px;font-size:14px;font-family:inherit}
+input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radius:8px;font-size:14px}
+.indicator-list{max-height:260px;overflow-y:auto;border:1px solid #cdd;border-radius:0 0 8px 8px;background:white}
+.ind-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #edf0f5;cursor:pointer;user-select:none}
+.ind-item:last-child{border-bottom:none}
+.ind-item:hover{background:#f0f7ff}
+.ind-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;flex-shrink:0}
+.ind-id{font-family:monospace;font-size:12px;color:#2980b9;min-width:95px}
+.ind-name{font-size:13px;flex:1}
+.ind-cnt{font-size:11px;color:#aaa;white-space:nowrap}
+.search-box{width:100%;padding:8px 12px;border:1px solid #cdd;border-bottom:none;border-radius:8px 8px 0 0;font-size:13px;font-family:inherit}
+.btn{display:inline-block;padding:12px 20px;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center}
+.btn-primary{background:#1a4f7a;color:white;width:100%;display:block}
+.btn-primary:disabled{background:#aaa;cursor:not-allowed}
+.btn-primary:not(:disabled):hover{background:#144060}
+.btn-orange{background:#e67e22;color:white}
+.btn-copy{background:white;color:#555;border:1px solid #cdd;font-size:13px;padding:8px 14px}
+.radio-row{display:flex;gap:14px;flex-wrap:wrap}
+.radio-item{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+.share-row{display:flex;gap:8px;margin-top:8px}
+.share-row input{flex:1;font-size:12px;background:#f8f8f8;color:#555;padding:8px 10px;border:1px solid #ddd;border-radius:6px}
+.hint{font-size:11px;color:#aaa;margin-top:4px}
+.progress-bar{background:#edf0f5;border-radius:10px;height:8px;margin-bottom:8px}
+.progress-fill{background:#1a4f7a;border-radius:10px;height:8px;transition:width .3s}
+.progress-text{font-size:12px;color:#888;text-align:right;margin-bottom:14px}
+.ind-badge{display:inline-block;background:#edf5ff;color:#1a4f7a;font-size:11px;padding:3px 10px;border-radius:10px;margin-bottom:10px;font-family:monospace}
+.img-wrap{text-align:center;margin-bottom:18px;min-height:100px;display:flex;align-items:center;justify-content:center}
+.img-wrap img{max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.img-err{color:#c00;font-size:14px;padding:20px;display:none}
+.ans-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ans-btn{padding:14px 10px;border:2px solid #cdd;border-radius:10px;background:white;font-size:15px;font-weight:bold;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit}
+.ans-btn:hover{border-color:#1a4f7a;background:#f0f7ff}
+.ans-btn.sel{border-color:#1a4f7a;background:#1a4f7a;color:white}
+.card{background:white;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:bold;margin-bottom:8px}
+.badge-ok{background:#d5f5e3;color:#196f3d}
+.badge-mid{background:#fef9e7;color:#9a7d0a}
+.badge-bad{background:#fdebd0;color:#a04000}
+.big-score{font-size:32px;font-weight:bold;color:#1a4f7a}
+.wrong-list{margin-top:12px}
+.wrong-item{border:1px solid #fad7d7;border-radius:8px;overflow:hidden;margin-bottom:10px}
+.wrong-hdr{background:#fdf2f2;padding:8px 12px;font-size:12px;color:#c00}
+.wrong-img img{max-width:100%;display:block}
+.wrong-ans{padding:8px 12px;font-size:12px;color:#555;background:#fffafa}
+.parents-note{font-size:12px;color:#888;margin-top:8px;padding:6px 10px;background:#f8f8f8;border-radius:6px}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.result-actions .btn{flex:1;min-width:140px;padding:12px}
+.loading{text-align:center;padding:40px;color:#888}
+.err-box{background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:14px;color:#c00;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div id="v-config">
+  <h1>📝 學扶數學診斷測驗</h1>
+  <div class="form-group">
+    <label class="form-label" for="i-sid">座號</label>
+    <input type="text" id="i-sid" placeholder="請輸入座號" maxlength="10">
+  </div>
+  <div class="form-group">
+    <label class="form-label" for="i-name">姓名</label>
+    <input type="text" id="i-name" placeholder="請輸入姓名">
+  </div>
+  <div id="settings-block">
+    <div class="form-group">
+      <label class="form-label">選擇指標（可複選）</label>
+      <input class="search-box" id="ind-search" placeholder="搜尋指標代碼或名稱…" oninput="renderIndList()">
+      <div class="indicator-list" id="ind-list"><div class="loading">載入中…</div></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">題數</label>
+      <div class="radio-row">
+        <label class="radio-item"><input type="radio" name="cnt" value="all" checked onchange="toggleCntInput()"> 全部題目</label>
+        <label class="radio-item"><input type="radio" name="cnt" value="custom" onchange="toggleCntInput()"> 指定
+          <input type="number" id="i-cnt" value="5" min="1" max="50" style="display:none">
+          <span id="cnt-sfx" style="display:none;font-size:13px">題</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">出題順序</label>
+      <div class="radio-row">
+        <label class="radio-item"><input type="radio" name="ord" value="random" checked> 隨機</label>
+        <label class="radio-item"><input type="radio" name="ord" value="sequential"> 依年份順序（由舊到新）</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="i-email">老師 Email（選填，結果頁寄信用）</label>
+      <input type="email" id="i-email" placeholder="teacher@school.edu.tw" oninput="updateShareUrl()">
+    </div>
+    <div class="share-row">
+      <input type="text" id="share-url" readonly placeholder="選好指標後，點此複製分享連結給學生">
+      <button class="btn btn-copy" onclick="copyShareUrl()">📋 複製連結</button>
+    </div>
+    <div class="hint">複製後發給學生，學生點開即進入你設定好的測驗</div>
+  </div>
+  <div style="margin-top:20px">
+    <button class="btn btn-primary" id="btn-start" onclick="startQuiz()" disabled>開始測驗</button>
+  </div>
+</div>
+
+<div id="v-quiz" style="display:none">
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+  <div class="progress-text" id="prog-txt"></div>
+  <div class="ind-badge" id="quiz-badge"></div>
+  <div class="img-wrap">
+    <img id="q-img" src="" alt="題目" onerror="imgError()">
+    <div class="img-err" id="img-err">⚠️ 圖片無法載入，請檢查網路連線</div>
+  </div>
+  <div class="ans-grid" id="ans-grid">
+    <button class="ans-btn" onclick="pick(1)">① 選項一</button>
+    <button class="ans-btn" onclick="pick(2)">② 選項二</button>
+    <button class="ans-btn" onclick="pick(3)">③ 選項三</button>
+    <button class="ans-btn" onclick="pick(4)">④ 選項四</button>
+  </div>
+</div>
+
+<div id="v-result" style="display:none">
+  <h1>📊 診斷結果</h1>
+  <div id="result-body"></div>
+</div>
+
+</div>
+
+<script>
+var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false};
+window.onload=function(){
+  fetch('./quiz_data.json?t='+Date.now())
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){
+      S.data=d;
+      var p=new URLSearchParams(location.search);
+      var pInds=p.get('indicators');
+      if(pInds){
+        var ids=pInds.split(',').filter(function(id){return d.indicators[id];});
+        if(ids.length>0){
+          S.cfg.inds=ids;
+          S.cfg.count=p.get('count')==='all'?0:(parseInt(p.get('count'))||0);
+          S.cfg.order=p.get('order')||'random';
+          S.cfg.to=decodeURIComponent(p.get('to')||'');
+          S.locked=true;
+          document.getElementById('settings-block').style.display='none';
+          document.getElementById('btn-start').disabled=false;
+          return;
+        }
+      }
+      renderIndList();
+    })
+    .catch(function(e){
+      document.getElementById('ind-list').innerHTML='<div class="err-box">載入題庫失敗：'+e.message+'<br>如為本地測試，請用 python -m http.server 8080 啟動</div>';
+    });
+};
+function renderIndList(){
+  if(!S.data)return;
+  var q=(document.getElementById('ind-search').value||'').toLowerCase();
+  var html='';
+  Object.keys(S.data.indicators).sort().forEach(function(id){
+    var ind=S.data.indicators[id];
+    if(q&&id.toLowerCase().indexOf(q)<0&&ind.name.toLowerCase().indexOf(q)<0)return;
+    var ck=S.cfg.inds.indexOf(id)>=0;
+    html+='<label class="ind-item"><input type="checkbox" value="'+id+'" '+(ck?'checked':'')+' onchange="toggleInd(this)">'
+         +'<span class="ind-id">'+id+'</span>'
+         +'<span class="ind-name">'+ind.name+'</span>'
+         +'<span class="ind-cnt">'+ind.questions.length+' 題</span></label>';
+  });
+  document.getElementById('ind-list').innerHTML=html||'<div style="padding:14px;color:#aaa;font-size:13px">無符合條件的指標</div>';
+}
+function toggleInd(cb){
+  var id=cb.value,idx=S.cfg.inds.indexOf(id);
+  if(cb.checked&&idx<0)S.cfg.inds.push(id);
+  if(!cb.checked&&idx>=0)S.cfg.inds.splice(idx,1);
+  document.getElementById('btn-start').disabled=S.cfg.inds.length===0;
+  updateShareUrl();
+}
+function toggleCntInput(){
+  var custom=document.querySelector('[name=cnt]:checked').value==='custom';
+  document.getElementById('i-cnt').style.display=custom?'':'none';
+  document.getElementById('cnt-sfx').style.display=custom?'':'none';
+  updateShareUrl();
+}
+function updateShareUrl(){
+  if(!S.data||S.cfg.inds.length===0){document.getElementById('share-url').value='';return;}
+  var base=location.origin+location.pathname;
+  var cntType=document.querySelector('[name=cnt]:checked');
+  var cnt=(cntType&&cntType.value==='custom')?(document.getElementById('i-cnt').value||5):'all';
+  var ord=document.querySelector('[name=ord]:checked');
+  var to=document.getElementById('i-email').value.trim();
+  var url=base+'?indicators='+S.cfg.inds.join(',')+'&count='+cnt+'&order='+(ord?ord.value:'random')+(to?'&to='+encodeURIComponent(to):'');
+  document.getElementById('share-url').value=url;
+}
+function copyShareUrl(){
+  var url=document.getElementById('share-url').value;
+  if(!url){alert('請先選擇至少一個指標');return;}
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){alert('分享連結已複製！');});}
+  else{document.getElementById('share-url').select();document.execCommand('copy');alert('分享連結已複製！');}
+}
+function startQuiz(){
+  S.cfg.name=document.getElementById('i-name').value.trim();
+  S.cfg.sid=document.getElementById('i-sid').value.trim();
+  if(!S.cfg.name){alert('請填入姓名');return;}
+  if(!S.locked){
+    var cntType=document.querySelector('[name=cnt]:checked');
+    S.cfg.count=(cntType&&cntType.value==='custom')?(parseInt(document.getElementById('i-cnt').value)||5):0;
+    var ord=document.querySelector('[name=ord]:checked');
+    S.cfg.order=ord?ord.value:'random';
+    S.cfg.to=document.getElementById('i-email').value.trim();
+  }
+  buildQs();
+  if(S.qs.length===0){alert('所選指標目前無可診斷的題目（需有截圖且有答案）');return;}
+  S.idx=0;S.ans={};
+  showView('quiz');
+  renderQ();
+}
+function buildQs(){
+  var pool=[];
+  S.cfg.inds.forEach(function(id){
+    var ind=S.data.indicators[id];
+    if(!ind)return;
+    ind.questions.forEach(function(q){
+      pool.push({id:id,name:ind.name,year:q.year,no:q.no,grade:q.grade,imageUrl:q.imageUrl,answer:q.answer});
+    });
+  });
+  if(S.cfg.order==='random'){
+    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  }
+  S.qs=S.cfg.count>0?pool.slice(0,S.cfg.count):pool;
+}
+function renderQ(){
+  var q=S.qs[S.idx],total=S.qs.length;
+  document.getElementById('prog-fill').style.width=Math.round(S.idx/total*100)+'%';
+  document.getElementById('prog-txt').textContent='第 '+(S.idx+1)+' / '+total+' 題';
+  document.getElementById('quiz-badge').textContent=q.id+'　'+q.name;
+  var img=document.getElementById('q-img');
+  document.getElementById('img-err').style.display='none';
+  img.style.display='block';
+  img.src=q.imageUrl;
+  document.querySelectorAll('.ans-btn').forEach(function(b,i){
+    b.className='ans-btn';
+    b.textContent=['①','②','③','④'][i]+' 選項 '+(i+1);
+  });
+}
+function imgError(){
+  document.getElementById('q-img').style.display='none';
+  document.getElementById('img-err').style.display='block';
+}
+function pick(ans){
+  var q=S.qs[S.idx],key=q.id+'_'+q.year+'_'+q.no;
+  S.ans[key]=ans;
+  document.querySelectorAll('.ans-btn').forEach(function(b,i){b.className='ans-btn'+(i+1===ans?' sel':'');});
+  setTimeout(function(){
+    S.idx++;
+    if(S.idx<S.qs.length){renderQ();}
+    else{showView('result');renderResult();}
+  },400);
+}
+function calcByInd(){
+  var r={};
+  S.cfg.inds.forEach(function(id){r[id]={correct:0,total:0,wrongs:[]};});
+  S.qs.forEach(function(q){
+    var key=q.id+'_'+q.year+'_'+q.no;
+    var stu=S.ans[key]||0;
+    var ok=parseInt(atob(q.answer));
+    if(!r[q.id])r[q.id]={correct:0,total:0,wrongs:[]};
+    r[q.id].total++;
+    if(stu>0&&stu===ok){r[q.id].correct++;}
+    else{r[q.id].wrongs.push({q:q,stu:stu,ok:ok});}
+  });
+  return r;
+}
+function masteryInfo(pct){
+  if(pct>=80)return{text:'✅ 掌握',cls:'badge-ok'};
+  if(pct>=50)return{text:'⚠️ 部分掌握',cls:'badge-mid'};
+  return{text:'❌ 需補強',cls:'badge-bad'};
+}
+function renderResult(){
+  var byInd=calcByInd();
+  var totC=0,totQ=S.qs.length;
+  Object.keys(byInd).forEach(function(id){totC+=byInd[id].correct;});
+  var pct=totQ>0?Math.round(totC/totQ*100):0;
+  var mi=masteryInfo(pct);
+  var html='';
+  html+='<div class="card">'
+    +'<div style="margin-bottom:8px;font-size:14px;color:#555">'+(S.cfg.sid?S.cfg.sid+'　':'')+S.cfg.name+'</div>'
+    +'<span class="badge '+mi.cls+'">'+mi.text+'</span>'
+    +'<div class="big-score">'+totC+' / '+totQ+'</div>'
+    +'<div style="font-size:13px;color:#888;margin-top:4px">整體答對率 '+pct+'%</div></div>';
+  S.cfg.inds.forEach(function(id){
+    var r=byInd[id];
+    if(!r||r.total===0)return;
+    var ind=S.data.indicators[id];
+    var p=Math.round(r.correct/r.total*100);
+    var im=masteryInfo(p);
+    html+='<div class="card">'
+      +'<div style="font-family:monospace;font-size:12px;color:#2980b9;margin-bottom:4px">'+id+'</div>'
+      +'<div style="font-size:15px;font-weight:bold;margin-bottom:8px">'+ind.name+'</div>'
+      +'<span class="badge '+im.cls+'">'+im.text+'</span>'
+      +'<div style="font-size:14px;color:#1a4f7a;margin-top:6px"><strong>'+r.correct+'/'+r.total+'</strong>（'+p+'%）</div>';
+    if(p<80&&ind.parents&&ind.parents.length>0){
+      var pnames=ind.parents.map(function(pid){var pi=S.data.indicators[pid];return pid+(pi?'　'+pi.name:'');});
+      html+='<div class="parents-note">💡 建議先複習前置指標：'+pnames.join('、')+'</div>';
+    }
+    if(r.wrongs.length>0){
+      html+='<div class="wrong-list"><div style="font-size:12px;color:#888;margin-bottom:6px">答錯的題目：</div>';
+      r.wrongs.forEach(function(w){
+        html+='<div class="wrong-item">'
+          +'<div class="wrong-hdr">❌ '+w.q.year+'　第 '+w.q.no+' 題</div>'
+          +'<div class="wrong-img"><img src="'+w.q.imageUrl+'" onerror="this.parentNode.style.display=\'none\'"></div>'
+          +'<div class="wrong-ans">你選 <strong>選項 '+(w.stu||'（未作答）')+'</strong>　正確答案 <strong>選項 '+w.ok+'</strong></div>'
+          +'</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='<div class="result-actions">';
+  if(S.cfg.to){html+='<a href="'+buildMailto(byInd)+'" class="btn btn-orange">📧 寄給老師</a>';}
+  html+='<button class="btn btn-copy" onclick="copyResult()">📋 複製結果</button></div>';
+  document.getElementById('result-body').innerHTML=html;
+}
+function buildMailto(byInd){
+  var nm=(S.cfg.sid?S.cfg.sid+' ':'')+S.cfg.name;
+  var indNames=S.cfg.inds.filter(function(id){return byInd[id]&&byInd[id].total>0;}).map(function(id){return S.data.indicators[id].name;});
+  var subj=encodeURIComponent('[學扶診斷] '+nm+' — '+indNames.join('、'));
+  var lines=[nm,''];
+  S.cfg.inds.forEach(function(id){
+    var r=byInd[id];
+    if(!r||r.total===0)return;
+    var p=Math.round(r.correct/r.total*100);
+    var label=p>=80?'掌握':p>=50?'部分掌握':'需補強';
+    lines.push(id+'　'+S.data.indicators[id].name);
+    lines.push('答對 '+r.correct+'/'+r.total+' 題（'+p+'%）— '+label);
+    if(r.wrongs.length>0){lines.push('答錯：'+r.wrongs.map(function(w){return w.q.year+' 第'+w.q.no+'題（答案:'+w.ok+'）';}).join('、'));}
+    lines.push('');
+  });
+  return 'mailto:'+encodeURIComponent(S.cfg.to)+'?subject='+subj+'&body='+encodeURIComponent(lines.join('\n'));
+}
+function copyResult(){
+  var byInd=calcByInd();
+  var nm=(S.cfg.sid?S.cfg.sid+' ':'')+S.cfg.name;
+  var lines=['學扶數學診斷結果',nm,''];
+  S.cfg.inds.forEach(function(id){
+    var r=byInd[id];
+    if(!r||r.total===0)return;
+    var p=Math.round(r.correct/r.total*100);
+    lines.push(id+' '+S.data.indicators[id].name+'：'+r.correct+'/'+r.total+'（'+p+'%）');
+    if(r.wrongs.length>0)lines.push('  答錯：'+r.wrongs.map(function(w){return w.q.year+'第'+w.q.no+'題';}).join('、'));
+  });
+  var txt=lines.join('\n');
+  if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){alert('結果已複製！');});}
+  else{alert('請手動複製：\n\n'+txt);}
+}
+function showView(v){
+  ['config','quiz','result'].forEach(function(n){document.getElementById('v-'+n).style.display=n===v?'':'none';});
+}
+</script>
+</body>
+</html>

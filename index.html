@@ -71,6 +71,24 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 .result-actions .btn{flex:1;min-width:140px;padding:12px}
 .loading{text-align:center;padding:40px;color:#888}
 .err-box{background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:14px;color:#c00;margin-bottom:16px}
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+@media(max-width:420px){.map-grid{grid-template-columns:1fr}}
+.map-card{background:white;border-radius:10px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #ccc}
+.map-card.ok{border-left-color:#27ae60}
+.map-card.mid{border-left-color:#f39c12}
+.map-card.bad{border-left-color:#e74c3c}
+.map-id{font-family:monospace;font-size:11px;color:#2980b9}
+.map-name{font-size:12px;font-weight:bold;color:#333;margin:3px 0 5px;line-height:1.4}
+.map-score{font-size:22px;font-weight:bold}
+.map-score.ok{color:#27ae60}
+.map-score.mid{color:#f39c12}
+.map-score.bad{color:#e74c3c}
+.map-meta{font-size:10px;color:#aaa;margin-top:2px}
+.map-again{display:block;margin-top:8px;text-align:center;padding:5px;background:#f0f7ff;color:#1a4f7a;border-radius:6px;font-size:12px;text-decoration:none;font-weight:bold}
+.map-again:hover{background:#d6eaf8}
+.map-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.map-nav h1{margin:0;border:none;padding:0}
+.map-back{background:none;border:none;font-size:20px;cursor:pointer;color:#1a4f7a;padding:4px}
 </style>
 </head>
 <body>
@@ -153,16 +171,36 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
   <div id="result-body"></div>
 </div>
 
+<div id="v-map" style="display:none">
+  <div class="map-nav">
+    <button class="map-back" onclick="showView('result')" title="返回結果">←</button>
+    <h1 id="map-title">學習地圖</h1>
+  </div>
+  <div class="grade-filter" id="map-grade-filter">
+    <button class="grade-chip active" data-g="0" onclick="setMapGrade(0)">全部年級</button>
+    <button class="grade-chip" data-g="2" onclick="setMapGrade(2)">2 年級</button>
+    <button class="grade-chip" data-g="3" onclick="setMapGrade(3)">3 年級</button>
+    <button class="grade-chip" data-g="4" onclick="setMapGrade(4)">4 年級</button>
+    <button class="grade-chip" data-g="5" onclick="setMapGrade(5)">5 年級</button>
+    <button class="grade-chip" data-g="6" onclick="setMapGrade(6)">6 年級</button>
+  </div>
+  <div id="map-body"><div class="loading">載入中…</div></div>
+</div>
+
 </div>
 
 <script>
-var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0};
+var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0,mapGradeFilter:0};
 window.onload=function(){
   fetch('./quiz_data.json?t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(d){
       S.data=d;
       var p=new URLSearchParams(location.search);
+      var pName=decodeURIComponent(p.get('name')||'');
+      var pSid=decodeURIComponent(p.get('sid')||'');
+      if(pName)document.getElementById('i-name').value=pName;
+      if(pSid)document.getElementById('i-sid').value=pSid;
       var pInds=p.get('indicators');
       if(pInds){
         var ids=pInds.split(',').filter(function(id){return d.indicators[id];});
@@ -185,10 +223,17 @@ window.onload=function(){
 };
 function setGrade(g){
   S.gradeFilter=g;
-  document.querySelectorAll('.grade-chip').forEach(function(c){
+  document.querySelectorAll('#grade-filter .grade-chip').forEach(function(c){
     c.classList.toggle('active', parseInt(c.getAttribute('data-g'))===g);
   });
   renderIndList();
+}
+function setMapGrade(g){
+  S.mapGradeFilter=g;
+  document.querySelectorAll('#map-grade-filter .grade-chip').forEach(function(c){
+    c.classList.toggle('active', parseInt(c.getAttribute('data-g'))===g);
+  });
+  renderMap();
 }
 function renderIndList(){
   if(!S.data)return;
@@ -347,7 +392,8 @@ function renderResult(){
         if(pi&&pi.questions&&pi.questions.length>0){
           var base=location.origin+location.pathname;
           var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
-          var purl=base+'?indicators='+pid+'&count=all&order=random'+to;
+          var nameQ='&name='+encodeURIComponent(S.cfg.name)+'&sid='+encodeURIComponent(S.cfg.sid||'');
+          var purl=base+'?indicators='+pid+'&count=all&order=random'+to+nameQ;
           html+='<a href="'+purl+'" target="_blank" class="btn-practice">去練習 →</a>';
         } else {
           html+='<span style="font-size:11px;color:#bbb">（暫無題目）</span>';
@@ -371,8 +417,11 @@ function renderResult(){
   });
   html+='<div class="result-actions">';
   if(S.cfg.to){html+='<a href="'+buildMailto(byInd)+'" class="btn btn-orange">📧 寄給老師</a>';}
-  html+='<button class="btn btn-copy" onclick="copyResult()">📋 複製結果</button></div>';
+  html+='<button class="btn btn-copy" onclick="copyResult()">📋 複製結果</button>';
+  html+='<button class="btn btn-copy" onclick="showMap()" style="background:#edf5ff;color:#1a4f7a;border-color:#b6d5f0">🗺️ 學習地圖</button>';
+  html+='</div>';
   document.getElementById('result-body').innerHTML=html;
+  saveToMap(byInd);
 }
 function buildMailto(byInd){
   var nm=(S.cfg.sid?S.cfg.sid+' ':'')+S.cfg.name;
@@ -407,7 +456,67 @@ function copyResult(){
   else{alert('請手動複製：\n\n'+txt);}
 }
 function showView(v){
-  ['config','quiz','result'].forEach(function(n){document.getElementById('v-'+n).style.display=n===v?'':'none';});
+  ['config','quiz','result','map'].forEach(function(n){document.getElementById('v-'+n).style.display=n===v?'':'none';});
+}
+function saveToMap(byInd){
+  if(!S.cfg.name)return;
+  var key='sqmap_'+(S.cfg.sid||'')+'_'+S.cfg.name;
+  var stored=localStorage.getItem(key);
+  var map=stored?JSON.parse(stored):{sid:S.cfg.sid,name:S.cfg.name,records:{}};
+  var today=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'});
+  S.cfg.inds.forEach(function(id){
+    var r=byInd[id];
+    if(!r||r.total===0)return;
+    var ind=S.data.indicators[id];
+    var pct=Math.round(r.correct/r.total*100);
+    if(!map.records[id])map.records[id]={name:ind.name,grade:ind.grade,sessions:[],best:0,latest:0};
+    var rec=map.records[id];
+    rec.sessions.push({date:today,correct:r.correct,total:r.total,pct:pct});
+    rec.best=Math.max(rec.best,pct);
+    rec.latest=pct;
+  });
+  localStorage.setItem(key,JSON.stringify(map));
+}
+function renderMap(){
+  var key='sqmap_'+(S.cfg.sid||'')+'_'+S.cfg.name;
+  var stored=localStorage.getItem(key);
+  if(!stored){document.getElementById('map-body').innerHTML='<div style="padding:20px;color:#aaa;text-align:center">尚無學習紀錄</div>';return;}
+  var map=JSON.parse(stored);
+  var recs=map.records;
+  var ids=Object.keys(recs).sort();
+  var gf=S.mapGradeFilter;
+  var filtered=gf?ids.filter(function(id){return recs[id].grade===gf;}):ids;
+  if(filtered.length===0){document.getElementById('map-body').innerHTML='<div style="padding:20px;color:#aaa;text-align:center">此年級尚無紀錄</div>';return;}
+  var base=location.origin+location.pathname;
+  var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
+  var nameQ='&name='+encodeURIComponent(S.cfg.name)+'&sid='+encodeURIComponent(S.cfg.sid||'');
+  var html='<div class="map-grid">';
+  filtered.forEach(function(id){
+    var rec=recs[id];
+    var pct=rec.latest;
+    var cls=pct>=80?'ok':pct>=50?'mid':'bad';
+    var last=rec.sessions[rec.sessions.length-1];
+    var times=rec.sessions.length;
+    var purl=base+'?indicators='+id+'&count=all&order=random'+to+nameQ;
+    html+='<div class="map-card '+cls+'">'
+      +'<div class="map-id">'+id+'</div>'
+      +'<div class="map-name">'+rec.name+'</div>'
+      +'<div class="map-score '+cls+'">'+pct+'%</div>'
+      +'<div class="map-meta">最高 '+rec.best+'%　共練 '+times+' 次<br>'+last.date+'</div>'
+      +'<a href="'+purl+'" target="_blank" class="map-again">再練一次 →</a>'
+      +'</div>';
+  });
+  html+='</div>';
+  document.getElementById('map-body').innerHTML=html;
+}
+function showMap(){
+  S.mapGradeFilter=0;
+  document.querySelectorAll('#map-grade-filter .grade-chip').forEach(function(c){
+    c.classList.toggle('active',c.getAttribute('data-g')==='0');
+  });
+  document.getElementById('map-title').textContent='學習地圖 — '+S.cfg.name;
+  showView('map');
+  renderMap();
 }
 </script>
 </body>

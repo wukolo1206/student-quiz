@@ -22,6 +22,10 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 .ind-id{font-family:monospace;font-size:12px;color:#2980b9;min-width:95px}
 .ind-name{font-size:13px;flex:1}
 .ind-cnt{font-size:11px;color:#aaa;white-space:nowrap}
+.grade-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.grade-chip{padding:5px 13px;border:1px solid #cdd;border-radius:20px;font-size:12px;cursor:pointer;background:white;font-family:inherit;color:#555;transition:all .15s}
+.grade-chip:hover{border-color:#1a4f7a;color:#1a4f7a}
+.grade-chip.active{background:#1a4f7a;color:white;border-color:#1a4f7a}
 .search-box{width:100%;padding:8px 12px;border:1px solid #cdd;border-bottom:none;border-radius:8px 8px 0 0;font-size:13px;font-family:inherit}
 .btn{display:inline-block;padding:12px 20px;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;text-decoration:none;text-align:center}
 .btn-primary{background:#1a4f7a;color:white;width:100%;display:block}
@@ -79,6 +83,14 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
   <div id="settings-block">
     <div class="form-group">
       <label class="form-label">選擇指標（可複選）</label>
+      <div class="grade-filter" id="grade-filter">
+        <button class="grade-chip active" data-g="0" onclick="setGrade(0)">全部年級</button>
+        <button class="grade-chip" data-g="2" onclick="setGrade(2)">2 年級</button>
+        <button class="grade-chip" data-g="3" onclick="setGrade(3)">3 年級</button>
+        <button class="grade-chip" data-g="4" onclick="setGrade(4)">4 年級</button>
+        <button class="grade-chip" data-g="5" onclick="setGrade(5)">5 年級</button>
+        <button class="grade-chip" data-g="6" onclick="setGrade(6)">6 年級</button>
+      </div>
       <input class="search-box" id="ind-search" placeholder="搜尋指標代碼或名稱…" oninput="renderIndList()">
       <div class="indicator-list" id="ind-list"><div class="loading">載入中…</div></div>
     </div>
@@ -138,7 +150,7 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 </div>
 
 <script>
-var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false};
+var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0};
 window.onload=function(){
   fetch('./quiz_data.json?t='+Date.now())
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
@@ -165,12 +177,20 @@ window.onload=function(){
       document.getElementById('ind-list').innerHTML='<div class="err-box">載入題庫失敗：'+e.message+'<br>如為本地測試，請用 python -m http.server 8080 啟動</div>';
     });
 };
+function setGrade(g){
+  S.gradeFilter=g;
+  document.querySelectorAll('.grade-chip').forEach(function(c){
+    c.classList.toggle('active', parseInt(c.getAttribute('data-g'))===g);
+  });
+  renderIndList();
+}
 function renderIndList(){
   if(!S.data)return;
   var q=(document.getElementById('ind-search').value||'').toLowerCase();
   var html='';
   Object.keys(S.data.indicators).sort().forEach(function(id){
     var ind=S.data.indicators[id];
+    if(S.gradeFilter&&ind.grade!==S.gradeFilter)return;
     if(q&&id.toLowerCase().indexOf(q)<0&&ind.name.toLowerCase().indexOf(q)<0)return;
     var ck=S.cfg.inds.indexOf(id)>=0;
     html+='<label class="ind-item"><input type="checkbox" value="'+id+'" '+(ck?'checked':'')+' onchange="toggleInd(this)">'

@@ -60,7 +60,13 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 .wrong-hdr{background:#fdf2f2;padding:8px 12px;font-size:12px;color:#c00}
 .wrong-img img{max-width:100%;display:block}
 .wrong-ans{padding:8px 12px;font-size:12px;color:#555;background:#fffafa}
-.parents-note{font-size:12px;color:#888;margin-top:8px;padding:6px 10px;background:#f8f8f8;border-radius:6px}
+.parents-note{font-size:12px;color:#888;margin-top:8px;padding:8px 10px;background:#f0f7ff;border-radius:6px;border-left:3px solid #1a4f7a}
+.parent-chips{margin-top:6px;display:flex;flex-direction:column;gap:5px}
+.parent-chip-row{display:flex;align-items:center;gap:8px;background:white;border-radius:6px;padding:6px 10px}
+.parent-pid{font-family:monospace;font-size:11px;color:#2980b9;white-space:nowrap;min-width:80px}
+.parent-pname{font-size:12px;flex:1;color:#333}
+.btn-practice{white-space:nowrap;padding:4px 12px;background:#1a4f7a;color:white;border-radius:6px;font-size:12px;text-decoration:none;font-weight:bold}
+.btn-practice:hover{background:#144060}
 .result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 .result-actions .btn{flex:1;min-width:140px;padding:12px}
 .loading{text-align:center;padding:40px;color:#888}
@@ -331,8 +337,24 @@ function renderResult(){
       +'<span class="badge '+im.cls+'">'+im.text+'</span>'
       +'<div style="font-size:14px;color:#1a4f7a;margin-top:6px"><strong>'+r.correct+'/'+r.total+'</strong>（'+p+'%）</div>';
     if(p<80&&ind.parents&&ind.parents.length>0){
-      var pnames=ind.parents.map(function(pid){var pi=S.data.indicators[pid];return pid+(pi?'　'+pi.name:'');});
-      html+='<div class="parents-note">💡 建議先複習前置指標：'+pnames.join('、')+'</div>';
+      html+='<div class="parents-note">💡 建議先練習前置概念：<div class="parent-chips">';
+      ind.parents.forEach(function(pid){
+        var pi=S.data.indicators[pid];
+        var pname=pi?pi.name:pid;
+        html+='<div class="parent-chip-row">'
+             +'<span class="parent-pid">'+pid+'</span>'
+             +'<span class="parent-pname">'+pname+'</span>';
+        if(pi&&pi.questions&&pi.questions.length>0){
+          var base=location.origin+location.pathname;
+          var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
+          var purl=base+'?indicators='+pid+'&count=all&order=random'+to;
+          html+='<a href="'+purl+'" target="_blank" class="btn-practice">去練習 →</a>';
+        } else {
+          html+='<span style="font-size:11px;color:#bbb">（暫無題目）</span>';
+        }
+        html+='</div>';
+      });
+      html+='</div></div>';
     }
     if(r.wrongs.length>0){
       html+='<div class="wrong-list"><div style="font-size:12px;color:#888;margin-bottom:6px">答錯的題目：</div>';

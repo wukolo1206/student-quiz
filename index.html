@@ -402,7 +402,8 @@ function renderResult(){
           var base=location.origin+location.pathname;
           var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
           var nameQ='&name='+encodeURIComponent(S.cfg.name)+'&sid='+encodeURIComponent(S.cfg.sid||'');
-          var purl=base+'?indicators='+pid+'&count=all&order=random'+to+nameQ;
+          var sheetQ=S.cfg.sheet?'&sheet='+encodeURIComponent(S.cfg.sheet):'';
+          var purl=base+'?indicators='+pid+'&count=all&order=random'+to+nameQ+sheetQ;
           html+='<a href="'+purl+'" target="_blank" class="btn-practice">去練習 →</a>';
         } else {
           html+='<span style="font-size:11px;color:#bbb">（暫無題目）</span>';
@@ -518,6 +519,7 @@ function renderMap(){
   var base=location.origin+location.pathname;
   var to=S.cfg.to?'&to='+encodeURIComponent(S.cfg.to):'';
   var nameQ='&name='+encodeURIComponent(S.cfg.name)+'&sid='+encodeURIComponent(S.cfg.sid||'');
+  var sheetQ=S.cfg.sheet?'&sheet='+encodeURIComponent(S.cfg.sheet):'';
   var html='<div class="map-grid">';
   filtered.forEach(function(id){
     var rec=recs[id];
@@ -525,7 +527,7 @@ function renderMap(){
     var cls=pct>=80?'ok':pct>=50?'mid':'bad';
     var last=rec.sessions[rec.sessions.length-1];
     var times=rec.sessions.length;
-    var purl=base+'?indicators='+id+'&count=all&order=random'+to+nameQ;
+    var purl=base+'?indicators='+id+'&count=all&order=random'+to+nameQ+sheetQ;
     html+='<div class="map-card '+cls+'">'
       +'<div class="map-id">'+id+'</div>'
       +'<div class="map-name">'+rec.name+'</div>'

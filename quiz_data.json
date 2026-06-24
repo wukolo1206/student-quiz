@@ -1,5 +1,5 @@
 {
-  "version": "202605311307",
+  "version": "202606250626",
   "indicators": {
     "SC-3-3-1": {
       "name": "認識圓的「圓心」、「圓周」、「半徑」與「直徑」並使用圓規畫圓",
@@ -6646,6 +6646,331 @@
           "answer": "Mw=="
         }
       ]
+    },
+    "NC-4-6-2": {
+      "name": "簡單異分母分數的大小比較與加減",
+      "grade": null,
+      "parents": [
+        "NC-4-5-3"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "R-4-1-2": {
+      "name": "整數四則混合計算（多步驟）",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "RC-2-3-1": {
+      "name": "認識乘法交換律",
+      "grade": null,
+      "parents": [
+        "RC-1-2-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-4-6-1": {
+      "name": "認識等值分數",
+      "grade": null,
+      "parents": [
+        "NC-3-9-2"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-4-4-1": {
+      "name": "認識體積及體積單位「立方公分」，並進行實測、估測及計算",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-2-4-1": {
+      "name": "認識給定的正方形、長方形、正三角形、等腰三角形的邊長關係",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-2-2-2": {
+      "name": "辨認、描述與分類簡單立體形體(球體、正方體、長方體、圓柱體等)",
+      "grade": null,
+      "parents": [
+        "SC-1-2-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "DC-3-1-1": {
+      "name": "認識一維表格",
+      "grade": null,
+      "parents": [
+        "DC-2-1-2"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-2-2-1": {
+      "name": "辨認、描述與分類簡單平面圖形(圓、三角形、正方形、長方形等)",
+      "grade": null,
+      "parents": [
+        "SC-1-2-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-3-17-2": {
+      "name": "進行時、分複名數時間量的加減(不進退位)",
+      "grade": 3,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "N-2-7": {
+      "name": "十十乘法：乘除直式計算的基礎，以",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-1-1": {
+      "name": "100 以內整數的命名及說、讀、聽、寫、做",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-2-1": {
+      "name": "理解加法與減法的意義，並用加法或減法算式記錄合成或分解活動的",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "S-1-2-1": {
+      "name": "平面圖形全等判斷（疊合）",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "RC-1-2-1": {
+      "name": "認識加法的交換律",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-1-1-2": {
+      "name": "利用間接比較（含個別單位的方法）比較兩物體的長短，並利個別單",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-2-2": {
+      "name": "用加法與減法，解決生活中的問題。（和數或被減數小於 100）",
+      "grade": 1,
+      "parents": [
+        "NC-1-2-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-5-1": {
+      "name": "認識直線與曲線，進行長度的直接比較，並用「長、短、高、矮」等",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-2-9-1": {
+      "name": "理解分裝問題",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-4-1": {
+      "name": "認識 1 元、5 元、10 元、50 元、100 元等錢幣，並能用這些錢幣來數",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-3-10-1": {
+      "name": "認識一位小數，並作比較與加減計算",
+      "grade": 3,
+      "parents": [
+        "NC-3-9-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-5-5-2": {
+      "name": "理解分數乘以分數的意義",
+      "grade": null,
+      "parents": [
+        "NC-5-5-1",
+        "NC-5-7-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "N-3-13-1": {
+      "name": "認識角（直接及間接比較）",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-4-4-3": {
+      "name": "四捨五入法對大數在指定位數取概數後，再做加、減之計算",
+      "grade": null,
+      "parents": [
+        "NC-4-4-2"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-1-1-1": {
+      "name": "認識直線與曲線，進行長度的直接比較，並用「長、短、高、矮等描",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-6-1": {
+      "name": "認識常用時間用語",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-5-10-1": {
+      "name": "認識比率及其在生活上的應用（含「百分率」、「折」）",
+      "grade": 5,
+      "parents": [
+        "NC-5-6-2"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "N-1-3-1": {
+      "name": "熟練基本加減法",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-4-12-1": {
+      "name": "認識體積及體積單位「立方公分」，並進行實測、估測及計算",
+      "grade": 4,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-6-3": {
+      "name": "認識鐘面上整點、半點的時刻",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-2-9-2": {
+      "name": "理解平分問題",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "RC-1-1-1": {
+      "name": "理解加法與減法的意義，並用加法或減法算式記錄合成或分解活動的",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-1-2": {
+      "name": "認識「個位」及「十位」的位名；100 以內位值單位的換算",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-5-2": {
+      "name": "利用間接比較（含個別單位的方法）比較兩物體的長短，並利用個別",
+      "grade": 1,
+      "parents": [
+        "NC-1-5-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-3-14-1": {
+      "name": "認識面積單位「平方公分」，並進行實測、估測及計算",
+      "grade": 3,
+      "parents": [
+        "NC-2-12-3"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "SC-1-2-1": {
+      "name": "描繪或複製簡單平面圖形，並能依給定圖示，將簡單形體作平面拼貼",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-4-7-3": {
+      "name": "二位小數的整數倍計算（直式）",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-4-1-1": {
+      "name": "一億以內數的命名及說、讀、聽、寫",
+      "grade": null,
+      "parents": [
+        "NC-3-1-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-1-1-5": {
+      "name": "2 個一數、5 個一數、10 個一數",
+      "grade": 1,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "DC-2-1-2": {
+      "name": "將分類的結果以圖表呈現並說明",
+      "grade": null,
+      "parents": [
+        "DC-1-1-1"
+      ],
+      "questions": [],
+      "skeleton": true
+    },
+    "NC-2-12-3": {
+      "name": "認識面積並進行面積的直接、間接與個別單位比較",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
+    },
+    "DC-1-1-1": {
+      "name": "對生活中的事件或活動做初步的分類與記錄",
+      "grade": null,
+      "parents": [],
+      "questions": [],
+      "skeleton": true
     }
   }
 }

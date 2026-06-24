@@ -89,6 +89,18 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 .map-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .map-nav h1{margin:0;border:none;padding:0}
 .map-back{background:none;border:none;font-size:20px;cursor:pointer;color:#1a4f7a;padding:4px}
+.map-actions{display:flex;gap:6px;margin-top:8px}
+.map-actions a,.map-actions button{flex:1;display:block;text-align:center;padding:5px;border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:bold;text-decoration:none}
+.map-actions .map-again{margin-top:0;background:#f0f7ff;color:#1a4f7a}
+.map-actions .map-again:hover{background:#d6eaf8}
+.map-hierarchy{background:#fff7e6;color:#b35c00}
+.map-hierarchy:hover{background:#ffe8bf}
+.map-focus-back{display:none;margin-bottom:10px;background:none;border:none;color:#1a4f7a;cursor:pointer;font-family:inherit;font-size:13px}
+.map-axis{display:none;flex-direction:column;align-items:flex-start;font-size:11px;margin:4px 2px 10px;line-height:1.6}
+.map-axis span{display:block}
+.map-axis .ax-top{color:#1a4f7a}
+.map-axis .ax-mid{color:#b35c00;font-weight:bold}
+.map-axis .ax-bot{color:#666}
 </style>
 </head>
 <body>
@@ -181,6 +193,12 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
     <button class="map-back" onclick="showView('result')" title="返回結果">←</button>
     <h1 id="map-title">學習地圖</h1>
   </div>
+  <button id="map-focus-back" class="map-focus-back" onclick="closeHierarchy()">← 返回全部學習紀錄</button>
+  <div id="map-axis" class="map-axis">
+    <span class="ax-top">↑ 上層：前置能力</span>
+    <span class="ax-mid">● 中層：目前能力</span>
+    <span class="ax-bot">↓ 下層：後續能力</span>
+  </div>
   <div class="grade-filter" id="map-grade-filter">
     <button class="grade-chip active" data-g="0" onclick="setMapGrade(0)">全部年級</button>
     <button class="grade-chip" data-g="2" onclick="setMapGrade(2)">2 年級</button>
@@ -203,8 +221,9 @@ input[type=number]{width:80px;padding:8px 10px;border:1px solid #cdd;border-radi
 
 </div>
 
+<script src="map_hierarchy_logic.js" onerror="window.__mapLogicFailed=true"></script>
 <script>
-var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:'',sheet:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0,mapGradeFilter:0};
+var S={data:null,cfg:{inds:[],count:0,order:'random',to:'',name:'',sid:'',sheet:''},qs:[],idx:0,ans:{},locked:false,gradeFilter:0,mapGradeFilter:0,mapFocusId:''};
 var GAS_URL='https:/'+ '/script.google.com/macros/s/AKfycby1XbfGkfnOy-mXHreGsRy9kmQ-gHX4ptsmNK0rR0ts-f-I9Hbb2bgvJGI6d8Qo9WdD/exec';
 window.onload=function(){
   fetch('./quiz_data.json?t='+Date.now())
@@ -218,7 +237,7 @@ window.onload=function(){
       if(pSid)document.getElementById('i-sid').value=pSid;
       var pInds=p.get('indicators');
       if(pInds){
-        var ids=pInds.split(',').filter(function(id){return d.indicators[id];});
+        var ids=pInds.split(',').filter(function(id){return d.indicators[id]&&d.indicators[id].questions&&d.indicators[id].questions.length;});
         if(ids.length>0){
           S.cfg.inds=ids;
           S.cfg.count=p.get('count')==='all'?0:(parseInt(p.get('count'))||0);
@@ -257,6 +276,7 @@ function renderIndList(){
   var html='';
   Object.keys(S.data.indicators).sort().forEach(function(id){
     var ind=S.data.indicators[id];
+    if(!ind.questions||!ind.questions.length)return;   // skeleton 不進派題選單
     if(S.gradeFilter&&ind.grade!==S.gradeFilter)return;
     if(q&&id.toLowerCase().indexOf(q)<0&&ind.name.toLowerCase().indexOf(q)<0)return;
     var ck=S.cfg.inds.indexOf(id)>=0;
@@ -523,20 +543,115 @@ function _mapPracticeUrl(id){
   var sheetQ=S.cfg.sheet?'&sheet='+encodeURIComponent(S.cfg.sheet):'';
   return base+'?indicators='+id+'&count=all&order=random'+to+nameQ+sheetQ;
 }
+function _safeLoadMap(key){
+  try{
+    var s=localStorage.getItem(key);
+    if(!s)return {records:{}};
+    var o=JSON.parse(s);
+    if(!o||typeof o!=='object')return {records:{}};
+    if(!o.records||typeof o.records!=='object')o.records={};
+    return o;
+  }catch(e){
+    return {records:{}};   // JSON 損毀 → 視為空紀錄，不白屏
+  }
+}
 function renderMap(){
   var key='sqmap_'+(S.cfg.sid||'')+'_'+S.cfg.name;
-  var stored=localStorage.getItem(key);
-  var map=stored?JSON.parse(stored):{records:{}};
+  var map=_safeLoadMap(key);
+  document.getElementById('map-info').style.display='none';
+  if(S.mapFocusId){
+    renderFocusedHierarchy(map,S.mapFocusId);
+    return;
+  }
+  document.getElementById('map-focus-back').style.display='none';
+  document.getElementById('map-axis').style.display='none';
   var gf=S.mapGradeFilter;
   document.getElementById('map-network').style.display='none';
   document.getElementById('map-legend').style.display='none';
-  document.getElementById('map-info').style.display='none';
   document.getElementById('map-hint').style.display=gf?'none':'block';
   if(gf){
     renderMapNetwork(map,gf);
   } else {
     renderMapCards(map);
   }
+}
+function showHierarchy(id){
+  S.mapFocusId=id;
+  document.getElementById('map-title').textContent='能力階層 — '+id;
+  document.getElementById('map-grade-filter').style.display='none';
+  document.getElementById('map-hint').style.display='none';
+  document.getElementById('map-focus-back').style.display='block';
+  renderMap();
+}
+function closeHierarchy(){
+  S.mapFocusId='';
+  document.getElementById('map-title').textContent='學習地圖 — '+S.cfg.name;
+  document.getElementById('map-grade-filter').style.display='flex';
+  document.getElementById('map-focus-back').style.display='none';
+  document.getElementById('map-axis').style.display='none';
+  setMapGrade(0);
+}
+function renderFocusedHierarchy(map,rootId){
+  var body=document.getElementById('map-body');
+  // 依賴防護：模組或 vis-network 未就緒 → 錯誤卡，不卡載入中
+  if(window.__mapLogicFailed||typeof MapHierarchy==='undefined'||!MapHierarchy.buildDirectHierarchy){
+    document.getElementById('map-network').style.display='none';
+    document.getElementById('map-legend').style.display='none';
+    body.innerHTML='<div class="err-box">能力階層模組載入失敗，請重新整理頁面</div>';
+    return;
+  }
+  if(window.__visFailed||typeof vis==='undefined'){
+    document.getElementById('map-network').style.display='none';
+    document.getElementById('map-legend').style.display='none';
+    body.innerHTML='<div class="err-box">關係圖載入失敗，請重新整理</div>';
+    return;
+  }
+  var model=MapHierarchy.buildDirectHierarchy(S.data.indicators,rootId,map.records||{});
+  if(!model){
+    document.getElementById('map-network').style.display='none';
+    document.getElementById('map-legend').style.display='none';
+    body.innerHTML='<div class="err-box">找不到這個能力節點</div>';
+    return;
+  }
+  document.getElementById('map-axis').style.display='flex';
+  var all=model.parents.concat([model.root],model.children);
+  var colors={
+    ok:{bg:'#d5f5e3',border:'#27ae60'},
+    mid:{bg:'#fef9e7',border:'#f39c12'},
+    bad:{bg:'#fdebd0',border:'#e74c3c'},
+    unseen:{bg:'#f0f0f0',border:'#bbb'}
+  };
+  var nodes=all.map(function(n){
+    var c=colors[n.state];
+    var label=n.id+(n.latest===null?'':'\n'+n.latest+'%');
+    return {
+      id:n.id,label:label,
+      title:n.missing?(n.id+'：能力資料尚未收錄'):(n.name+(n.hasQuestions?'':'（暫無題目）')),
+      level:n.id===rootId?1:(model.parents.some(function(p){return p.id===n.id;})?0:2),
+      color:{background:c.bg,border:n.id===rootId?'#f39c12':c.border,highlight:{background:c.bg,border:'#1a4f7a'}},
+      borderWidth:n.id===rootId?4:(n.latest===null?1:2),
+      shapeProperties:n.hasQuestions?{borderDashes:false}:{borderDashes:[4,4]},
+      font:{size:11,color:n.hasQuestions?'#333':'#888'},shape:'box',margin:8
+    };
+  });
+  var edges=[];
+  model.parents.forEach(function(n){edges.push({from:n.id,to:rootId,arrows:'to',color:{color:'#ccc'}});});
+  model.children.forEach(function(n){edges.push({from:rootId,to:n.id,arrows:'to',color:{color:'#ccc'}});});
+
+  var container=document.getElementById('map-network');
+  container.style.display='block';
+  container.style.height='360px';
+  body.innerHTML='';
+  document.getElementById('map-legend').style.display='flex';
+  if(_visNet){_visNet.destroy();_visNet=null;}
+  _visNet=new vis.Network(container,
+    {nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)},
+    {layout:{hierarchical:{enabled:true,direction:'UD',sortMethod:'directed',levelSeparation:100,nodeSpacing:150}},
+     physics:false,interaction:{hover:true,tooltipDelay:200,zoomView:true,dragView:true},
+     edges:{smooth:{type:'cubicBezier',forceDirection:'vertical'},arrows:{to:{scaleFactor:0.6}}}});
+  _visNet.once('afterDrawing',function(){_visNet.fit({animation:{duration:300}});});
+  _visNet.on('click',function(p){if(p.nodes.length)showMapNodeInfo(p.nodes[0],map);});
+  showMapNodeInfo(rootId,map);
 }
 function renderMapCards(map){
   var recs=map.records;
@@ -553,7 +668,10 @@ function renderMapCards(map){
       +'<div class="map-name">'+rec.name+'</div>'
       +'<div class="map-score '+cls+'">'+pct+'%</div>'
       +'<div class="map-meta">最高 '+rec.best+'%　共練 '+rec.sessions.length+' 次<br>'+last.date+'</div>'
+      +'<div class="map-actions">'
       +'<a href="'+_mapPracticeUrl(id)+'" target="_blank" class="map-again">再練一次 →</a>'
+      +'<button class="map-hierarchy" onclick="showHierarchy(\''+id+'\')">查看能力階層</button>'
+      +'</div>'
       +'</div>';
   });
   html+='</div>';
@@ -629,25 +747,40 @@ function showMapNodeInfo(id,map){
   var cls=rec?(rec.latest>=80?'ok':rec.latest>=50?'mid':'bad'):'';
   var html='<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">'
     +'<div style="flex:1;min-width:150px">'
-    +'<div class="map-id">'+id+'</div>'
-    +'<div class="map-name">'+ind.name+'</div>';
+    +'<div class="map-id">'+id+'</div>';
+  if(!ind){
+    // 占位節點（資料未收錄，理論上 skeleton 補完後不會發生，留作安全網）
+    html+='<div class="map-name">能力資料尚未收錄</div>'
+      +'<div style="color:#aaa;font-size:12px;margin-top:4px">此前置能力尚未進入題庫</div></div>'
+      +'<span style="font-size:11px;color:#aaa;align-self:center">暫無練習題</span></div>';
+    panel.innerHTML=html;panel.style.display='block';return;
+  }
+  html+='<div class="map-name">'+ind.name+'</div>';
   if(rec){
-    html+='<div class="map-score '+cls+'">'+rec.latest+'%</div>'
+    html+='<div class="map-score '+cls+'">最近一次 '+rec.latest+'%</div>'
       +'<div class="map-meta">最高 '+rec.best+'%　共練 '+rec.sessions.length+' 次</div>';
   } else {
     html+='<div style="color:#aaa;font-size:12px;margin-top:4px">尚未練習</div>';
   }
-  html+='</div>'
-    +'<a href="'+_mapPracticeUrl(id)+'" target="_blank" class="btn-practice" style="align-self:center">去練習 →</a>'
-    +'</div>';
+  html+='</div>';
+  if(ind.questions&&ind.questions.length){
+    html+='<a href="'+_mapPracticeUrl(id)+'" target="_blank" class="btn-practice" style="align-self:center">去練習 →</a>';
+  } else {
+    html+='<span style="font-size:11px;color:#aaa;align-self:center">暫無題目</span>';
+  }
+  html+='</div>';
   panel.innerHTML=html;
   panel.style.display='block';
 }
 function showMap(){
   S.mapGradeFilter=0;
+  S.mapFocusId='';
   document.querySelectorAll('#map-grade-filter .grade-chip').forEach(function(c){
     c.classList.toggle('active',c.getAttribute('data-g')==='0');
   });
+  document.getElementById('map-grade-filter').style.display='flex';
+  document.getElementById('map-focus-back').style.display='none';
+  document.getElementById('map-axis').style.display='none';
   document.getElementById('map-title').textContent='學習地圖 — '+S.cfg.name;
   showView('map');
   if(!window.vis){
@@ -655,6 +788,10 @@ function showMap(){
     var s=document.createElement('script');
     s.src='https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js';
     s.onload=function(){renderMap();};
+    s.onerror=function(){
+      window.__visFailed=true;
+      document.getElementById('map-body').innerHTML='<div class="err-box">關係圖載入失敗，請重新整理</div>';
+    };
     document.head.appendChild(s);
   } else {
     renderMap();
